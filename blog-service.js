@@ -40,7 +40,7 @@ module.exports.getPostsByCategory = function (category) {
       return post.category === parseInt(category);
     });
     if (categories.length === 0) reject("no results returned");
-    resolve(categories[0]);
+    resolve(categories);
   });
 };
 
@@ -50,7 +50,7 @@ module.exports.getPostsByMinDate = function (minDateStr) {
       return new Date(post.postDate) >= new Date(minDateStr);
     });
     if (categories.length === 0) reject("no results returned");
-    resolve(categories[0]);
+    resolve(categories);
   });
 };
 
