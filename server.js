@@ -61,14 +61,6 @@ app.use(function (req, res, next) {
   next();
 });
 
-app.use(function (req, res, next) {
-  res.status(404);
-  if (req.accepts("html")) {
-    res.render("404", { url: req.url });
-    return;
-  }
-});
-
 cloudinary.config({
   cloud_name: env.CLOUD_NAME,
   api_key: env.API_KEY,
@@ -77,7 +69,7 @@ cloudinary.config({
 });
 
 app.get("/", function (req, res) {
-  res.redirect("/about");
+  res.redirect("/blog");
 });
 
 app.get("/about", function (req, res) {
