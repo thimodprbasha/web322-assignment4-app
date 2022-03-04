@@ -248,8 +248,8 @@ app.post(
       req.body.featureImage = uploaded.url;
       blog
         .getPost(req.body)
-        .then((data) => {
-          res.json(data);
+        .then(() => {
+          res.redirect("/posts");
         })
         .catch((err) => {
           res.send(`Problem with creating data..... ${err}`);
