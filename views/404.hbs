@@ -1,4 +1,7 @@
 <div class="col-md-12 text-center">
-      <h1>404 Page Not Found</h2>
-      <p>{{url}}</p>
+    <h1>{{Errdata.CODE}}</h1>
+    <h2>{{Errdata.MESSAGE}}</h2>
+    {{#if Errdata.URL}}
+        <p>{{Errdata.URL}}</p>
+    {{/if}}
 </div>

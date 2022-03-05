@@ -53,14 +53,6 @@ app.set("view engine", "hbs");
 app.set("views", path.join(__dirname, "/views"));
 app.use(express.static("public"));
 
-app.use(function (req, res, next) {
-  let route = req.path.substring(1);
-  app.locals.activeRoute =
-    route == "/" ? "/" : "/" + route.replace(/\/(.*)/, "");
-  app.locals.viewingCategory = req.query.category;
-  next();
-});
-
 cloudinary.config({
   cloud_name: env.CLOUD_NAME,
   api_key: env.API_KEY,
@@ -69,11 +61,11 @@ cloudinary.config({
 });
 
 app.get("/", function (req, res) {
-  res.redirect("/blog");
+  res.status(200).redirect("/blog");
 });
 
 app.get("/about", function (req, res) {
-  res.render("about");
+  res.status(200).render("about");
 });
 
 app.get("/blog", async (req, res) => {
@@ -100,8 +92,7 @@ app.get("/blog", async (req, res) => {
   } catch (err) {
     viewData.categoriesMessage = "no results";
   }
-  console.log(viewData.post);
-  res.render("blog", { data: viewData });
+  res.status(200).render("blog", { data: viewData });
 });
 
 app.get("/blog/:id", async (req, res) => {
@@ -130,8 +121,7 @@ app.get("/blog/:id", async (req, res) => {
   } catch (err) {
     viewData.categoriesMessage = "no results";
   }
-  console.log(viewData.post);
-  res.render("blog", { data: viewData });
+  res.status(200).render("blog", { data: viewData });
 });
 
 //setup posts route
@@ -149,7 +139,6 @@ app.get("/posts:minDate", function (req, res) {
 
 app.get("/posts:category", function (req, res) {
   var id = req.query.category;
-  console.log(id);
   blog
     .getPostsByCategory(id)
     .then((data) => {
@@ -165,7 +154,6 @@ app.get("/posts", function (req, res) {
   var id = req.query.id;
   var minDate = req.query.minDate;
 
-  console.log(id, minDate, category);
   if (typeof category !== "undefined") {
     blog
       .getPostsByCategory(category)
@@ -197,10 +185,10 @@ app.get("/posts", function (req, res) {
     blog
       .getAllPosts()
       .then((data) => {
-        res.render("post", { posts: data });
+        res.status(200).render("post", { posts: data });
       })
       .catch((err) => {
-        res.render("posts", { message: "no results" });
+        res.status(200).render("post", { message: "no results" });
       });
   }
 });
@@ -209,15 +197,15 @@ app.get("/categories", function (req, res) {
   blog
     .getCategories()
     .then((data) => {
-      res.render("catergory", { categories: data });
+      res.status(200).render("catergory", { categories: data });
     })
     .catch((err) => {
-      res.render("catergory", { message: "no results" });
+      res.status(200).render("catergory", { message: "no results" });
     });
 });
 
 app.get("/posts/add", function (req, res) {
-  res.render("addPost");
+  res.status(200).render("addPost");
 });
 
 app.post(
@@ -263,20 +251,39 @@ app.post(
 var HTTP_PORT = process.env.PORT || 8081;
 
 app.use((req, res) => {
-  res.status(404).send("Page Not Found");
+  res.status(404).render("404" , {
+    Errdata : {
+      CODE : 404 ,
+      MESSAGE : "Page Not Found",
+      URL : req.url
+    }
+  })
+});
+
+app.use(function (req, res, next) {
+  let route = req.path.substring(1);
+  app.locals.activeRoute =
+      route == "/" ? "/" : "/" + route.replace(/\/(.*)/, "");
+  app.locals.viewingCategory = req.query.category;
+  next();
 });
 
 // This use() will add an error handler function to
 // catch all errors.
 app.use(function (err, req, res, next) {
   console.error(err.stack);
-  res.status(500).send("Something broke!");
+  res.status(500).render("404" , {
+    Errdata : {
+      CODE : 500 ,
+      MESSAGE : "Internal Server Error"
+    }
+  })
 });
 
 // call this function after the http server starts listening for requests
 function onHttpStart() {
   console.log("Express http server listening on: " + HTTP_PORT);
-  console.log("server listening on: http://localhost:8080/");
+  console.log("server listening on: http://localhost:" + HTTP_PORT + "/");
 }
 
 // if the intialize function successfully invoke then the server should listen on 8080
