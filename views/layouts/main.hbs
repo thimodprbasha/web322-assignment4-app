@@ -41,9 +41,10 @@
             {{#navLink "/about"}}About{{/navLink}}
           </ul>
           <ul class="nav navbar-nav navbar-right">
-            <li><a href="/posts">Posts</a></li>
-            <li><a href="/categories">Categories</a></li>
-            <li><a href="/posts/add">Add Post</a></li>
+            {{#navLink "/posts"}}Posts{{/navLink}}
+            {{#navLink "/categories"}}Categories{{/navLink}}
+            {{#navLink "/imgadd"}}Add Post{{/navLink}}
+            {{! <li><a href="/about">About</a></li> }}
           </ul>
         </div>
         <!-- /.navbar-collapse -->

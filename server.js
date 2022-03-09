@@ -11,12 +11,22 @@ const stripJs = require("strip-js");
 
 var app = express();
 
+app.use(function (req, res, next) {
+  let route = req.path.substring(1);
+  console.log("r", route.replace(/\/(.*)/, ""));
+  app.locals.activeRoute =
+    route == "/" ? "/" : "/" + route.replace(/\/(.*)/, "");
+  app.locals.viewingCategory = req.query.category;
+  next();
+});
+
 const hbs = handlebars.create({
   extname: "hbs",
   layoutsDir: path.join(__dirname, "/views/layouts"),
   defaultLayout: "main",
   helpers: {
     navLink: function (url, options) {
+      console.log(app.locals.activeRoute);
       return (
         "<li" +
         (url == app.locals.activeRoute ? ' class="active" ' : "") +
@@ -204,80 +214,68 @@ app.get("/categories", function (req, res) {
     });
 });
 
-app.get("/posts/add", function (req, res) {
+app.get("/imgadd", function (req, res) {
   res.status(200).render("addPost");
 });
 
-app.post(
-  "/posts/add",
-  upload.single("featureImage"),
-  function (req, res, next) {
-    let streamUpload = (req) => {
-      return new Promise((resolve, reject) => {
-        let stream = cloudinary.uploader.upload_stream((error, result) => {
-          if (result) {
-            resolve(result);
-          } else {
-            reject(error);
-          }
-        });
-
-        streamifier.createReadStream(req.file.buffer).pipe(stream);
+app.post("/imgadd", upload.single("featureImage"), function (req, res, next) {
+  let streamUpload = (req) => {
+    return new Promise((resolve, reject) => {
+      let stream = cloudinary.uploader.upload_stream((error, result) => {
+        if (result) {
+          resolve(result);
+        } else {
+          reject(error);
+        }
       });
-    };
 
-    async function upload(req) {
-      let result = await streamUpload(req);
-      console.log(result);
-      return result;
-    }
-
-    upload(req).then((uploaded) => {
-      req.body.featureImage = uploaded.url;
-      blog
-        .getPost(req.body)
-        .then(() => {
-          res.redirect("/posts");
-        })
-        .catch((err) => {
-          res.send(`Problem with creating data..... ${err}`);
-        });
+      streamifier.createReadStream(req.file.buffer).pipe(stream);
     });
+  };
+
+  async function upload(req) {
+    let result = await streamUpload(req);
+    console.log(result);
+    return result;
   }
-);
+
+  upload(req).then((uploaded) => {
+    req.body.featureImage = uploaded.url;
+    blog
+      .getPost(req.body)
+      .then(() => {
+        res.redirect("/posts");
+      })
+      .catch((err) => {
+        res.send(`Problem with creating data..... ${err}`);
+      });
+  });
+});
 
 // seting up http server to listen on HTTP_PORT
 // Define a port to listen to requests on.
 var HTTP_PORT = process.env.PORT || 8081;
 
 app.use((req, res) => {
-  res.status(404).render("404" , {
-    Errdata : {
-      CODE : 404 ,
-      MESSAGE : "Page Not Found",
-      URL : req.url
-    }
-  })
-});
-
-app.use(function (req, res, next) {
-  let route = req.path.substring(1);
-  app.locals.activeRoute =
-      route == "/" ? "/" : "/" + route.replace(/\/(.*)/, "");
-  app.locals.viewingCategory = req.query.category;
-  next();
+  res.status(404).render("404", {
+    Errdata: {
+      CODE: 404,
+      MESSAGE: "Page Not Found",
+      URL: req.url,
+    },
+  });
 });
 
 // This use() will add an error handler function to
 // catch all errors.
 app.use(function (err, req, res, next) {
   console.error(err.stack);
-  res.status(500).render("404" , {
-    Errdata : {
-      CODE : 500 ,
-      MESSAGE : "Internal Server Error"
-    }
-  })
+  res.status(500).render("404", {
+    Errdata: {
+      CODE: 500,
+      MESSAGE: "Internal Server Error",
+    },
+  });
 });
 
 // call this function after the http server starts listening for requests
