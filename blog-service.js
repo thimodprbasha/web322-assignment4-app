@@ -1,73 +1,200 @@
-const fs = require("fs");
+const sequelizeController = require("./models/initialize-db");
+const postQueryController = sequelizeController.model.post;
+const categoryQueryController = sequelizeController.model.category;
 
-var posts = [];
-var categories = [];
+const env = require("./env");
 
-module.exports.initialize = function () {
+module.exports.initializeDB = () => {
   return new Promise(function (resolve, reject) {
-    fs.readFile("./data/posts.json", "utf-8", function (err, data) {
-      if (err) reject(err.message);
-      posts = JSON.parse(data);
-      fs.readFile("./data/categories.json", "utf-8", function (err, data) {
-        if (err) return reject(err.message);
-        categories = JSON.parse(data);
-        resolve();
+    sequelizeController.sequelize
+      .sync()
+      .then(() => {
+        resolve(
+          `Connection has been established with ${env.DB.DATABASE} successfully.`
+        );
+      })
+      .catch((error) => {
+        reject(error);
       });
-    });
   });
+
+  return;
+};
+
+let formatDate = (dateObj) => {
+  return (
+    dateObj.getFullYear() +
+    "-" +
+    String(dateObj.getMonth() + 1).padStart(2, "0") +
+    "-" +
+    String(dateObj.getDate()).padStart(2, "0")
+  );
 };
 
 module.exports.getAllPosts = function () {
   return new Promise(function (resolve, reject) {
-    if (posts.length === 0) reject("no results returned");
-    resolve(posts);
+    let Post = [];
+
+    postQueryController
+      .findAll()
+      .then((data) => {
+        data.forEach((element) => {
+          console.log(element);
+          let post = {};
+          post.id = element.post_id;
+          post.body = element.body;
+          post.title = element.title;
+          post.postDate = formatDate(new Date(element.postDate));
+          post.featureImage = element.featureImage;
+          post.published = element.published;
+          post.category =
+            element.categoryCategoryId === null
+              ? "null"
+              : element.categoryCategoryId;
+          Post.push(post);
+        });
+        if (Post.length === 0) reject("no results returned");
+        resolve(Post);
+      })
+      .catch((error) => {
+        reject(error);
+      });
   });
 };
 
 module.exports.getPublishedPosts = function () {
   return new Promise(function (resolve, reject) {
-    var isPublished = posts.filter(function (post) {
-      return post.published === true;
-    });
-    if (isPublished.length === 1) reject("no results returned");
-    resolve(isPublished);
+    let Post = [];
+    postQueryController
+      .findAll({ where: { published: true } })
+      .then((data) => {
+        data.forEach((element) => {
+          console.log(element);
+          let post = {};
+          post.id = element.post_id;
+          post.body = element.body;
+          post.title = element.title;
+          post.postDate = formatDate(new Date(element.postDate));
+          post.featureImage = element.featureImage;
+          post.published = element.published;
+          post.category = element.categoryCategoryId;
+          Post.push(post);
+        });
+        if (Post.length === 0) reject("no results returned");
+        resolve(Post);
+      })
+      .catch((error) => {
+        reject(error);
+      });
   });
 };
 
 module.exports.getPostsByCategory = function (category) {
   return new Promise(function (resolve, reject) {
-    var categories = posts.filter(function (post) {
-      return post.category === parseInt(category);
-    });
-    if (categories.length === 0) reject("no results returned");
-    resolve(categories);
+    let Post = [];
+    postQueryController
+      .findAll({ where: { category: category } })
+      .then((data) => {
+        data.forEach((element) => {
+          console.log(element);
+          let post = {};
+          post.id = element.post_id;
+          post.body = element.body;
+          post.title = element.title;
+          post.postDate = formatDate(new Date(element.postDate));
+          post.featureImage = element.featureImage;
+          post.published = element.published;
+          post.category = element.categoryCategoryId;
+          Post.push(post);
+        });
+        if (Post.length === 0) reject("no results returned");
+        resolve(Post);
+      })
+      .catch((error) => {
+        reject(error);
+      });
   });
 };
 
 module.exports.getPostsByMinDate = function (minDateStr) {
   return new Promise(function (resolve, reject) {
-    var categories = posts.filter(function (post) {
-      return new Date(post.postDate) >= new Date(minDateStr);
-    });
-    if (categories.length === 0) reject("no results returned");
-    resolve(categories);
+    let Post = [];
+    postQueryController
+      .findAll()
+      .then((data) => {
+        data.forEach((element) => {
+          console.log(element);
+          let post = {};
+          post.id = element.post_id;
+          post.body = element.body;
+          post.title = element.title;
+          post.postDate = formatDate(new Date(element.postDate));
+          post.featureImage = element.featureImage;
+          post.published = element.published;
+          post.category =
+            element.categoryCategoryId === null
+              ? "null"
+              : element.categoryCategoryId;
+          Post.push(post);
+        });
+        const filteredData = Post.filter(function (post) {
+          return new Date(post.postDate) >= new Date(minDateStr);
+        });
+        if (filteredData.length === 0) reject("no results returned");
+        resolve(filteredData);
+      })
+      .catch((error) => {
+        reject(error);
+      });
   });
 };
 
 module.exports.getPostById = function (id) {
   return new Promise(function (resolve, reject) {
-    var categories = posts.filter(function (post) {
-      return post.id === parseInt(id);
-    });
-    if (categories.length === 0) reject("no results returned");
-    resolve(categories[0]);
+    let Post = [];
+    postQueryController
+      .findAll({ where: { post_id: id } })
+      .then((data) => {
+        data.forEach((element) => {
+          console.log(element);
+          let post = {};
+          post.id = element.post_id;
+          post.body = element.body;
+          post.title = element.title;
+          post.postDate = formatDate(new Date(element.postDate));
+          post.featureImage = element.featureImage;
+          post.published = element.published;
+          post.category = element.categoryCategoryId;
+          Post.push(post);
+        });
+        if (Post.length === 0) reject("no results returned");
+        resolve(Post);
+      })
+      .catch((error) => {
+        reject(error);
+      });
   });
 };
 
 module.exports.getCategories = function () {
   return new Promise(function (resolve, reject) {
-    if (categories.length === 0) reject("no results returned");
-    resolve(categories);
+    let Category = [];
+    categoryQueryController
+      .findAll()
+      .then((data) => {
+        data.forEach((element) => {
+          console.log(element);
+          let CategoryObj = {};
+          CategoryObj.id = element.category_id;
+          CategoryObj.category = element.category;
+          Category.push(CategoryObj);
+        });
+        if (Category.length === 0) reject("no results returned");
+        resolve(Category);
+      })
+      .catch((error) => {
+        reject(error);
+      });
   });
 };
 
@@ -81,49 +208,63 @@ module.exports.getPost = function (posData) {
     } else {
       posData.published = true;
     }
+
     let date = new Date();
-    posData.postDate =
+    const currentDate =
       date.getFullYear() +
       "-" +
       String(date.getMonth() + 1).padStart(2, "0") +
       "-" +
       String(date.getDate()).padStart(2, "0");
-    posData.id = posts.length + 1;
-    posts.push(posData);
-    resolve(posts);
+
+    let Post = {
+      title: posData.title,
+      body: posData.body,
+      featureImage: posData.featureImage,
+      postDate: currentDate,
+      published: posData.published,
+      categoryCategoryId: posData.category,
+    };
+
+    postQueryController
+      .create(Post)
+      .then((result) => {
+        resolve(result);
+      })
+      .catch((error) => {
+        reject(error);
+      });
   });
 };
 
 module.exports.getPublishedPostsByCategory = function (category) {
   return new Promise(function (resolve, reject) {
-    var postsdata = posts.filter((data) => {
-      return data.published == true && data.category == parseInt(category);
-    });
-
-    if (postsdata.length === 0) reject("no result returned");
-    resolve(postsdata);
+    let Post = [];
+    postQueryController
+      .findAll({
+        where: {
+          categoryCategoryId: { like: "%" + category + "%" },
+          published: { like: "%" + true + "%" },
+        },
+      })
+      .then((data) => {
+        data.forEach((element) => {
+          console.log(element);
+          let post = {};
+          post.id = element.post_id;
+          post.body = element.body;
+          post.title = element.title;
+          post.postDate = formatDate(new Date(element.postDate));
+          post.featureImage = element.featureImage;
+          post.published = element.published;
+          post.category = element.categoryCategoryId;
+          Post.push(post);
+        });
+        if (Post.length === 0) reject("no results returned");
+        resolve(Post);
+      })
+      .catch((error) => {
+        reject(error);
+      });
   });
 };
-
-// module.exports.streamUpload = function(req , res){
-//     return new Promise((resolve, reject) => {
-//         let stream = cloudinary.uploader.upload_stream(
-//           (error, result) => {
-//             if (result) {
-//               resolve(result);
-//             } else {
-//               reject(error);
-//             }
-//           }
-//         );
-
-//        streamifier.createReadStream(req.file.buffer).pipe(stream);
-//     });
-//     async function upload(req) {
-//         let result = await streamUpload(req);
-//         console.log(result);
-//     }
-
-//     upload(req);
-
-// }

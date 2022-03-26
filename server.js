@@ -1,6 +1,5 @@
-var express = require("express");
-var path = require("path");
-const blog = require("./blog-service");
+const express = require("express");
+const path = require("path");
 const multer = require("multer");
 const cloudinary = require("cloudinary").v2;
 const streamifier = require("streamifier");
@@ -8,12 +7,16 @@ const env = require("./env");
 const handlebars = require("express-handlebars");
 const upload = multer();
 const stripJs = require("strip-js");
+const morgan = require("morgan");
+// const logger = require("./config/logger");
+const blog = require("./blog-service");
 
-var app = express();
+const app = express();
+
+// app.use(morgan("combined", { stream: logger.stream }));
 
 app.use(function (req, res, next) {
   let route = req.path.substring(1);
-  console.log("r", route.replace(/\/(.*)/, ""));
   app.locals.activeRoute =
     route == "/" ? "/" : "/" + route.replace(/\/(.*)/, "");
   app.locals.viewingCategory = req.query.category;
@@ -26,7 +29,6 @@ const hbs = handlebars.create({
   defaultLayout: "main",
   helpers: {
     navLink: function (url, options) {
-      console.log(app.locals.activeRoute);
       return (
         "<li" +
         (url == app.locals.activeRoute ? ' class="active" ' : "") +
@@ -55,6 +57,14 @@ const hbs = handlebars.create({
     safeHTML: function (context) {
       return stripJs(context);
     },
+
+    formatDate: function (dateObj) {
+      // const dateObj = new Date(date);
+      let year = dateObj.getFullYear();
+      let month = (dateObj.getMonth() + 1).toString();
+      let day = dateObj.getDate().toString();
+      return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+    },
   },
 });
 
@@ -64,10 +74,10 @@ app.set("views", path.join(__dirname, "/views"));
 app.use(express.static("public"));
 
 cloudinary.config({
-  cloud_name: env.CLOUD_NAME,
-  api_key: env.API_KEY,
-  api_secret: env.API_SECRET,
-  secure: true,
+  cloud_name: env.CLOUDINARY.CLOUD_NAME,
+  api_key: env.CLOUDINARY.API_KEY,
+  api_secret: env.CLOUDINARY.API_SECRET,
+  secure: env.CLOUDINARY.SECURE,
 });
 
 app.get("/", function (req, res) {
@@ -195,6 +205,8 @@ app.get("/posts", function (req, res) {
     blog
       .getAllPosts()
       .then((data) => {
+        console.error("Serv", data);
+
         res.status(200).render("post", { posts: data });
       })
       .catch((err) => {
@@ -247,6 +259,7 @@ app.post("/imgadd", upload.single("featureImage"), function (req, res, next) {
         res.redirect("/posts");
       })
       .catch((err) => {
+        // logger.error(`Problem with creating data..... ${err}`);
         res.send(`Problem with creating data..... ${err}`);
       });
   });
@@ -254,7 +267,7 @@ app.post("/imgadd", upload.single("featureImage"), function (req, res, next) {
 
 // seting up http server to listen on HTTP_PORT
 // Define a port to listen to requests on.
-var HTTP_PORT = process.env.PORT || 8081;
+var HTTP_PORT = process.env.PORT || env.PORT.HOST;
 
 app.use((req, res) => {
   res.status(404).render("404", {
@@ -280,18 +293,21 @@ app.use(function (err, req, res, next) {
 
 // call this function after the http server starts listening for requests
 function onHttpStart() {
-  console.log("Express http server listening on: " + HTTP_PORT);
-  console.log("server listening on: http://localhost:" + HTTP_PORT + "/");
+  // logger.info(`Express http server listening on ${HTTP_PORT}`);
+  // logger.info(`server listening on: http://localhost:${HTTP_PORT}/`);
+  console.log(`Express http server listening on ${HTTP_PORT}`);
+  console.log(`server listening on: http://localhost:${HTTP_PORT}/`);
 }
 
 // if the intialize function successfully invoke then the server should listen on 8080
 blog
-  .initialize()
-  .then(() => {
+  .initializeDB()
+  .then((result) => {
+    // logger.info(returnConfig.authSuccess);
+    console.log(result);
     app.listen(HTTP_PORT, onHttpStart);
   })
   .catch((err) => {
-    console.log(
-      `There was a problem invoking the initialize function ... ${err}`
-    );
+    console.log(err);
+    // logger.error(err);
   });
