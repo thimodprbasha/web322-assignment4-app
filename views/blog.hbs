@@ -5,8 +5,12 @@
       <p>Please try another Post / Category</p>
     </div>
   {{/unless}}
+
+
   <section class="main col-md-9">
     <article>
+    {{#if data.post}}
+
       <h2>{{data.post.title}}</h2>
       <img
         src="{{data.post.featureImage}}"
@@ -20,9 +24,11 @@
       {{data.post.category}}<br />
       <strong>Last Updated:</strong>
       {{data.post.postDate}}
+    {{/if}}
 
     </article>
   </section>
+
   <aside class="col-md-3">
     <br /><br />
     {{#if data.posts}}
