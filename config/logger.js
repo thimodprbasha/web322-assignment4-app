@@ -44,18 +44,18 @@ var logger = createLogger({
 logger.stream = {
   write: function (message, encoding) {
     // use the 'info' log level so the output will be picked up by both transports (file and console)
-    // logger.info(message);
+    logger.info(message);
   },
 };
 
-// console.log = function () {
-//   return logger.info.apply(logger, arguments);
-// };
-// console.error = function () {
-//   return logger.error.apply(logger, arguments);
-// };
-// console.info = function () {
-//   return logger.warn.apply(logger, arguments);
-// };
+console.log = function () {
+  return logger.info.apply(logger, arguments);
+};
+console.error = function () {
+  return logger.error.apply(logger, arguments);
+};
+console.info = function () {
+  return logger.warn.apply(logger, arguments);
+};
 
 module.exports = logger;
