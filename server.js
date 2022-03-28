@@ -8,12 +8,12 @@ const handlebars = require("express-handlebars");
 const upload = multer();
 const stripJs = require("strip-js");
 const morgan = require("morgan");
-// const logger = require("./config/logger");
+const logger = require("./config/logger");
 const blog = require("./blog-service");
 
 const app = express();
 
-// app.use(morgan("combined", { stream: logger.stream }));
+app.use(morgan("combined", { stream: logger.stream }));
 
 app.use(function (req, res, next) {
   let route = req.path.substring(1);
@@ -72,6 +72,7 @@ app.engine("hbs", hbs.engine);
 app.set("view engine", "hbs");
 app.set("views", path.join(__dirname, "/views"));
 app.use(express.static("public"));
+app.use(express.urlencoded({ extended: true }));
 
 cloudinary.config({
   cloud_name: env.CLOUDINARY.CLOUD_NAME,
@@ -82,6 +83,40 @@ cloudinary.config({
 
 app.get("/", function (req, res) {
   res.status(200).redirect("/blog");
+});
+
+app.get("/categories/add", function (req, res) {
+  res.status(200).render("addCategory");
+});
+
+app.get("/posts/delete/:id", function (req, res) {
+  blog
+    .deletePostById(req.params.id)
+    .then(() => res.status(200).redirect("/posts"))
+    .catch(() => {
+      logger.error(`Destory Error : ${err}`);
+      res.status(500).send("Unable to Remove Post / Post not found");
+    });
+});
+
+app.get("/categories/delete/:id", function (req, res) {
+  blog
+    .deleteCategoryById(req.params.id)
+    .then(() => res.status(200).redirect("/categories"))
+    .catch((err) => {
+      logger.error(`Destory Error : ${err}`);
+      res.status(500).send("Unable to Remove category / Category not found");
+    });
+});
+
+app.post("/categories/add", function (req, res) {
+  blog
+    .createCategory(req.body.category)
+    .then(() => res.status(200).redirect("/categories"))
+    .catch((err) => {
+      logger.error(`Creation Error : ${err}`);
+      res.send(`Problem with creating category ..... ${err}`);
+    });
 });
 
 app.get("/about", function (req, res) {
@@ -98,7 +133,9 @@ app.get("/blog", async (req, res) => {
     } else {
       posts = await blog.getPublishedPosts();
     }
+
     posts.sort((a, b) => new Date(b.postDate) - new Date(a.postDate));
+
     let post = posts[0];
     viewData.posts = posts;
     viewData.post = post;
@@ -180,7 +217,7 @@ app.get("/posts", function (req, res) {
       .then((data) => {
         res.render("post", { posts: data });
       })
-      .catch((err) => {
+      .catch(() => {
         res.render("posts", { message: "no results" });
       });
   } else if (typeof id !== "undefined") {
@@ -189,8 +226,8 @@ app.get("/posts", function (req, res) {
       .then((data) => {
         res.json(data);
       })
-      .catch((err) => {
-        res.send(`Problem with fetching All posts..... ${err}`);
+      .catch(() => {
+        res.render("posts", { message: "no results" });
       });
   } else if (typeof minDate !== "undefined") {
     blog
@@ -198,18 +235,16 @@ app.get("/posts", function (req, res) {
       .then((data) => {
         res.json(data);
       })
-      .catch((err) => {
-        res.send(`Problem with fetching All posts..... ${err}`);
+      .catch(() => {
+        res.render("posts", { message: "no results" });
       });
   } else {
     blog
       .getAllPosts()
       .then((data) => {
-        console.error("Serv", data);
-
         res.status(200).render("post", { posts: data });
       })
-      .catch((err) => {
+      .catch(() => {
         res.status(200).render("post", { message: "no results" });
       });
   }
@@ -221,13 +256,20 @@ app.get("/categories", function (req, res) {
     .then((data) => {
       res.status(200).render("catergory", { categories: data });
     })
-    .catch((err) => {
+    .catch(() => {
       res.status(200).render("catergory", { message: "no results" });
     });
 });
 
-app.get("/imgadd", function (req, res) {
-  res.status(200).render("addPost");
+app.get("/posts/add", function (req, res) {
+  blog
+    .getCategories()
+    .then((data) => {
+      res.status(200).render("addPost", { categories: data });
+    })
+    .catch(() => {
+      res.status(200).render("addPost", { categories: [] });
+    });
 });
 
 app.post("/imgadd", upload.single("featureImage"), function (req, res, next) {
@@ -246,8 +288,13 @@ app.post("/imgadd", upload.single("featureImage"), function (req, res, next) {
   };
 
   async function upload(req) {
-    let result = await streamUpload(req);
-    console.log(result);
+    try {
+      let result = await streamUpload(req);
+      logger.info(`streamUpload : ${result}`);
+    } catch (error) {
+      logger.error(`streamUpload Error : ${error}`);
+    }
+
     return result;
   }
 
@@ -259,8 +306,7 @@ app.post("/imgadd", upload.single("featureImage"), function (req, res, next) {
         res.redirect("/posts");
       })
       .catch((err) => {
-        // logger.error(`Problem with creating data..... ${err}`);
-        res.send(`Problem with creating data..... ${err}`);
+        logger.error(`Creation Error : ${err}`);
       });
   });
 });
@@ -282,7 +328,8 @@ app.use((req, res) => {
 // This use() will add an error handler function to
 // catch all errors.
 app.use(function (err, req, res, next) {
-  console.error(err.stack);
+  logger.error(err.stack);
+
   res.status(500).render("404", {
     Errdata: {
       CODE: 500,
@@ -293,21 +340,17 @@ app.use(function (err, req, res, next) {
 
 // call this function after the http server starts listening for requests
 function onHttpStart() {
-  // logger.info(`Express http server listening on ${HTTP_PORT}`);
-  // logger.info(`server listening on: http://localhost:${HTTP_PORT}/`);
-  console.log(`Express http server listening on ${HTTP_PORT}`);
-  console.log(`server listening on: http://localhost:${HTTP_PORT}/`);
+  logger.info(`Express http server listening on ${HTTP_PORT}`);
+  logger.info(`server listening on: http://localhost:${HTTP_PORT}/`);
 }
 
 // if the intialize function successfully invoke then the server should listen on 8080
 blog
   .initializeDB()
   .then((result) => {
-    // logger.info(returnConfig.authSuccess);
-    console.log(result);
+    logger.info(result);
     app.listen(HTTP_PORT, onHttpStart);
   })
   .catch((err) => {
-    console.log(err);
-    // logger.error(err);
+    logger.error(err);
   });

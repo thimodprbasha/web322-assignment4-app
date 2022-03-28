@@ -17,8 +17,6 @@ module.exports.initializeDB = () => {
         reject(error);
       });
   });
-
-  return;
 };
 
 let formatDate = (dateObj) => {
@@ -39,7 +37,6 @@ module.exports.getAllPosts = function () {
       .findAll()
       .then((data) => {
         data.forEach((element) => {
-          console.log(element);
           let post = {};
           post.id = element.post_id;
           post.body = element.body;
@@ -69,7 +66,6 @@ module.exports.getPublishedPosts = function () {
       .findAll({ where: { published: true } })
       .then((data) => {
         data.forEach((element) => {
-          console.log(element);
           let post = {};
           post.id = element.post_id;
           post.body = element.body;
@@ -92,11 +88,11 @@ module.exports.getPublishedPosts = function () {
 module.exports.getPostsByCategory = function (category) {
   return new Promise(function (resolve, reject) {
     let Post = [];
+
     postQueryController
-      .findAll({ where: { category: category } })
+      .findOne({ where: { categoryCategoryId: category } })
       .then((data) => {
         data.forEach((element) => {
-          console.log(element);
           let post = {};
           post.id = element.post_id;
           post.body = element.body;
@@ -108,6 +104,7 @@ module.exports.getPostsByCategory = function (category) {
           Post.push(post);
         });
         if (Post.length === 0) reject("no results returned");
+
         resolve(Post);
       })
       .catch((error) => {
@@ -123,7 +120,6 @@ module.exports.getPostsByMinDate = function (minDateStr) {
       .findAll()
       .then((data) => {
         data.forEach((element) => {
-          console.log(element);
           let post = {};
           post.id = element.post_id;
           post.body = element.body;
@@ -138,8 +134,9 @@ module.exports.getPostsByMinDate = function (minDateStr) {
           Post.push(post);
         });
         const filteredData = Post.filter(function (post) {
-          return new Date(post.postDate) >= new Date(minDateStr);
+          return new Date(post.postDate) <= new Date(minDateStr);
         });
+
         if (filteredData.length === 0) reject("no results returned");
         resolve(filteredData);
       })
@@ -151,24 +148,19 @@ module.exports.getPostsByMinDate = function (minDateStr) {
 
 module.exports.getPostById = function (id) {
   return new Promise(function (resolve, reject) {
-    let Post = [];
     postQueryController
-      .findAll({ where: { post_id: id } })
+      .findOne({ where: { post_id: id } })
       .then((data) => {
-        data.forEach((element) => {
-          console.log(element);
-          let post = {};
-          post.id = element.post_id;
-          post.body = element.body;
-          post.title = element.title;
-          post.postDate = formatDate(new Date(element.postDate));
-          post.featureImage = element.featureImage;
-          post.published = element.published;
-          post.category = element.categoryCategoryId;
-          Post.push(post);
-        });
-        if (Post.length === 0) reject("no results returned");
-        resolve(Post);
+        let post = {};
+        post.id = data.post_id;
+        post.body = data.body;
+        post.title = data.title;
+        post.postDate = formatDate(new Date(data.postDate));
+        post.featureImage = data.featureImage;
+        post.published = data.published;
+        post.category =
+          data.categoryCategoryId === null ? "null" : data.categoryCategoryId;
+        resolve(post);
       })
       .catch((error) => {
         reject(error);
@@ -183,14 +175,63 @@ module.exports.getCategories = function () {
       .findAll()
       .then((data) => {
         data.forEach((element) => {
-          console.log(element);
           let CategoryObj = {};
           CategoryObj.id = element.category_id;
           CategoryObj.category = element.category;
           Category.push(CategoryObj);
         });
-        if (Category.length === 0) reject("no results returned");
+        if (Category.length === 0) reject("no results");
         resolve(Category);
+      })
+      .catch((error) => {
+        reject(error);
+      });
+  });
+};
+
+module.exports.createCategory = function (categoryObj) {
+  return new Promise(function (resolve, reject) {
+    const category = {
+      category: categoryObj,
+    };
+    categoryQueryController
+      .create(category)
+      .then((result) => {
+        resolve(result);
+      })
+      .catch((error) => {
+        reject(error);
+      });
+  });
+};
+
+module.exports.deleteCategoryById = function (id) {
+  return new Promise(function (resolve, reject) {
+    categoryQueryController
+      .destroy({
+        where: {
+          category_id: id,
+        },
+      })
+      .then((result) => {
+        resolve(result);
+      })
+      .catch((error) => {
+        reject(error);
+      });
+  });
+};
+
+module.exports.deletePostById = function (id) {
+  return new Promise(function (resolve, reject) {
+    postQueryController
+      .destroy({
+        where: {
+          post_id: id,
+        },
+      })
+      .then((result) => {
+        resolve(result);
       })
       .catch((error) => {
         reject(error);
@@ -209,13 +250,8 @@ module.exports.getPost = function (posData) {
       posData.published = true;
     }
 
-    let date = new Date();
-    const currentDate =
-      date.getFullYear() +
-      "-" +
-      String(date.getMonth() + 1).padStart(2, "0") +
-      "-" +
-      String(date.getDate()).padStart(2, "0");
+    let date = new Date("2022-03-29");
+    const currentDate = formatDate(date);
 
     let Post = {
       title: posData.title,
@@ -243,13 +279,12 @@ module.exports.getPublishedPostsByCategory = function (category) {
     postQueryController
       .findAll({
         where: {
-          categoryCategoryId: { like: "%" + category + "%" },
-          published: { like: "%" + true + "%" },
+          categoryCategoryId: category,
+          published: true,
         },
       })
       .then((data) => {
         data.forEach((element) => {
-          console.log(element);
           let post = {};
           post.id = element.post_id;
           post.body = element.body;
