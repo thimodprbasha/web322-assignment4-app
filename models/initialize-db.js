@@ -8,7 +8,7 @@ var sequelize = new Sequelize(env.DB.DATABASE, env.DB.USER, env.DB.PASSWORD, {
   port: env.DB.PORT,
   dialectOptions: env.DB.DIALECT_OPTION,
   query: env.DB.QUERY,
-  // logging: false,
+  logging: false,
 });
 
 const Post = require("./post-model")(sequelize, Sequelize);

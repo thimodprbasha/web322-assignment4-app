@@ -21,4 +21,10 @@ module.exports = {
     API_SECRET: "9LNbFvteQzDqnx4JMhN1WE0209U",
     SECURE: true,
   },
+  MONGODB_CONFIG: {
+    URL: "mongodb+srv://dbuser:<password>@cluster0.rrmk7.mongodb.net/myFirstDatabase?retryWrites=true&w=majority",
+    PASSWORD: "12345",
+    USER: "dbuser",
+    DB: "asssigment6",
+  },
 };
