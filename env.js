@@ -16,9 +16,9 @@ module.exports = {
     HOST: 8080,
   },
   CLOUDINARY: {
-    CLOUD_NAME: "testappdinj123q",
-    API_KEY: "947624955641163",
-    API_SECRET: "9LNbFvteQzDqnx4JMhN1WE0209U",
+    CLOUD_NAME: "anishwebapp6",
+    API_KEY: "766172445885572",
+    API_SECRET: "rJbjSqhR1pH-4T4ElFYPvOzzYsE",
     SECURE: true,
   },
   MONGODB_CONFIG: {
