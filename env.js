@@ -1,10 +1,10 @@
 module.exports = {
   DB: {
-    USER: "fdetbjzemvyjjo",
-    HOST: "ec2-44-194-4-127.compute-1.amazonaws.com",
-    DATABASE: "ddtt6kp2848soj",
+    USER: "fesjaqoahlltoh",
+    HOST: "ec2-52-3-60-53.compute-1.amazonaws.com",
+    DATABASE: "daugvo8icimo4b",
     PASSWORD:
-      "d7a6e5313263b0106fbf062b824b2e5660e425f7bc13b8e2a5bc03ea82444060",
+      "ef6090a7ee2cc42a564ebcf496c19ca0e1eeafa3fa618d5fc619c83b2ee9b581",
     PORT: 5432,
     DIALECT: "postgres",
     DIALECT_OPTION: {
