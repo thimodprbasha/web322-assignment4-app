@@ -356,8 +356,10 @@ app.post("/imgadd", upload.single("featureImage"), function (req, res, next) {
   };
 
   async function upload(req) {
+    let result = null;
     try {
-      let result = await streamUpload(req);
+      result = await streamUpload(req);
+      console.log(result);
       logger.info(`streamUpload : ${result}`);
     } catch (error) {
       logger.error(`streamUpload Error : ${error}`);
